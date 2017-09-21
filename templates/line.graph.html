@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <style>
+        #chart svg {
+        height: 500px;
+        }
+    </style>
+    <script>
+        nv.addGraph(function () {
+            var chart = nv.models.lineChart()
+                .useInteractiveGuideline(true)
+            ;
+
+            chart.xAxis
+                .axisLabel('Weekly period')
+                .tickFormat(d3.format(',r'))
+            ;
+
+            chart.yAxis
+                .axisLabel('Proportion of back jobs')
+                .tickFormat(d3.format('.02f'))
+            ;
+
+            d3.select('#chart svg')
+                .datum(data())
+                .transition().duration(500)
+                .call(chart)
+            ;
+
+            nv.utils.windowResize(chart.update);
+
+            return chart;
+        });
+
+        function data() {
+            var sin = {{ data|safe }},
+                cos = [];
+
+            return [
+                {
+                    values: sin,
+                    key: 'Weekly Back Job Proportion',
+                    color: '#ff7f0e'
+                }
+            ];
+        }
+    </script>
+    <div id="chart">
+        <svg></svg>
+    </div>
+    {{ start_date|date }}
+    {{ end_date|date }}
+
+    <form action="." method="get">
+        <input type="date" name="date">
+        <input type="submit" value="graph">
+    </form>
+{% endblock %}

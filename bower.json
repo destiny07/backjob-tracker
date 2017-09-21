@@ -1,0 +1,24 @@
+{
+  "name": "graph_one",
+  "authors": [
+    "destiny07 <destiny.abellana7@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "static/components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "nvd3": "^1.8.6",
+    "jquery": "^3.2.1",
+    "bootstrap": "v4.0.0-beta",
+    "popper.js": "^1.12.5"
+  }
+}

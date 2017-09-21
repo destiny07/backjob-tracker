@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block content %}
+     <style>
+        #chart svg {
+        height: 500px;
+        }
+    </style>
+    <script>
+        //Regular pie chart example
+        nv.addGraph(function () {
+            var chart = nv.models.pieChart()
+                .x(function (d) {
+                    return d.label
+                })
+                .y(function (d) {
+                    return d.value
+                })
+                .showLabels(true);
+
+            d3.select("#chart svg")
+                .datum(exampleData())
+                .transition().duration(350)
+                .call(chart);
+
+            return chart;
+        });
+
+        //Donut chart example
+        nv.addGraph(function () {
+            var chart = nv.models.pieChart()
+                .x(function (d) {
+                    return d.label
+                })
+                .y(function (d) {
+                    return d.value
+                })
+                .showLabels(true)     //Display pie labels
+                .labelThreshold(.05)  //Configure the minimum slice size for labels to show up
+                .labelType("percent") //Configure what type of data to show in the label. Can be "key", "value" or "percent"
+                .donut(true)          //Turn on Donut mode. Makes pie chart look tasty!
+                .donutRatio(0.35)     //Configure how big you want the donut hole size to be.
+            ;
+
+            d3.select("#chart2 svg")
+                .datum(exampleData())
+                .transition().duration(350)
+                .call(chart);
+
+            return chart;
+        });
+
+        //Pie chart example data. Note how there is only a single array of key-value pairs.
+        function exampleData() {
+            return [
+                {
+                    "label": "Back Jobs ({{ backjob_score }}%)",
+                    "value": {{ backjob_score }}
+                },
+                {
+                    "label": "Non-back Jobs ({{ non_backjob_score }}%)",
+                    "value": {{ non_backjob_score }}
+                }
+            ];
+        }
+    </script>
+    <div id="chart">
+        <svg></svg>
+    </div>
+    <form action="." method="get">
+        <select name="year">
+            <option value="2017">2017</option>
+        </select>
+        <select name="month">
+            <option value="1">Jan</option>
+            <option value="2">Feb</option>
+            <option value="3">Mar</option>
+            <option value="4">Apr</option>
+            <option value="5">May</option>
+            <option value="6">Jun</option>
+            <option value="7">Jul</option>
+            <option value="8">Aug</option>
+            <option value="9">Sep</option>
+            <option value="10">Oct</option>
+            <option value="11">Nov</option>
+            <option value="12">Dec</option>
+        </select>
+        <input type="submit" value="graph">
+    </form>
+{% endblock %}
