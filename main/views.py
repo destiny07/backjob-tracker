@@ -64,12 +64,12 @@ class ControlChartView(TemplateView):
         start_date = self.get_start_date(date)
         end_date = self.get_end_date(date)
 
-        # weekly_stat = self.get_weekly_job_stat(start_date, end_date)
-        # backjob_list = weekly_stat['backjob_list']
-        # total_job_list = weekly_stat['total_job_list']
+        weekly_stat = self.get_weekly_job_stat(start_date, end_date)
+        backjob_list = weekly_stat['backjob_list']
+        total_job_list = weekly_stat['total_job_list']
 
-        backjob_list = [2, 3, 1, 3, 6, 6, 20]
-        total_job_list = [31, 25, 38, 28, 21, 25, 50]
+        # backjob_list = [2, 3, 1, 3, 6, 6, 20]
+        # total_job_list = [31, 25, 38, 28, 21, 25, 50]
 
         dataset = self.generate_graph_data(backjob_list, total_job_list)
         ucl = self.generate_graph_upper_control_limit(backjob_list, total_job_list)
