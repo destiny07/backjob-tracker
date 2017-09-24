@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
     <style>
         #chart svg {
-        height: 500px;
+            height: 300px;
         }
     </style>
     <script>
@@ -34,26 +35,81 @@
         });
 
         function data() {
-            var sin = {{ data|safe }},
-                cos = [];
+            var dataset = {{ dataset|safe }},
+                cl = {{ cl|safe }},
+                ucl = {{ ucl|safe }};
 
             return [
                 {
-                    values: sin,
+                    values: dataset,
                     key: 'Weekly Back Job Proportion',
                     color: '#ff7f0e'
+                },
+                {
+                    values: cl,
+                    key: 'center line',
+                    color: '#42d9f4'
+                },
+                {
+                    values: ucl,
+                    key: 'upper control limit',
+                    color: '#f44292'
                 }
             ];
         }
     </script>
-    <div id="chart">
-        <svg></svg>
+    <div class="container">
+        <div class="row">
+            <div class="col-9">
+                <div class="row">
+                    <div class="col">
+                        <div id="chart">
+                            <svg></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <h5>P-bar: {{ cl_value|floatformat:2 }}</h5>
+                        <h5>UCL: {{ ucl_value|floatformat:2 }}</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="thumbnail">
+                    <a href="{% static 'main/src-reference.png' %}">
+                        <img src="{% static 'main/src-reference.png' %}" alt="SRC Reference" style="width:100%">
+                        <div class="caption">
+                            <p>SRC Reference</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
-    {{ start_date|date }}
-    {{ end_date|date }}
 
-    <form action="." method="get">
-        <input type="date" name="date">
-        <input type="submit" value="graph">
-    </form>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h5>Date Range: </h5>
+                <h6>{{ start_date|date }} - {{ end_date|date }}</h6>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <form action="." method="get">
+                    <div class="input-fields">
+                        <div class="form-group">
+                            <label for="graph-date"></label>
+                            <input type="date" name="date" class="form-control" id="graph-date" required>
+                        </div>
+                    </div>
+                    <div class="submit-btn float-right">
+                        <input type="submit" value="Graph" class="btn btn-primary">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}

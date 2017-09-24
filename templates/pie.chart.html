@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 
 {% block content %}
-     <style>
+    <style>
         #chart svg {
-        height: 500px;
+            height: 500px;
         }
     </style>
     <script>
@@ -67,10 +67,11 @@
     <div id="chart">
         <svg></svg>
     </div>
+    <h3>{{ month }} {{ year }}</h3>
     <form action="." method="get">
-        <select name="year">
-            <option value="2017">2017</option>
-        </select>
+            <select name="year">
+                <option value="2017">2017</option>
+            </select>
         <select name="month">
             <option value="1">Jan</option>
             <option value="2">Feb</option>
