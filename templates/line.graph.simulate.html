@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <style>
+        #chart svg {
+            height: 300px;
+        }
+    </style>
+    <script>
+        nv.addGraph(function () {
+            var chart = nv.models.lineChart()
+                .useInteractiveGuideline(true)
+            ;
+
+            chart.xAxis
+                .axisLabel('Weekly period')
+                .tickFormat(d3.format(',r'))
+            ;
+
+            chart.yAxis
+                .axisLabel('Proportion of back jobs')
+                .tickFormat(d3.format('.02f'))
+            ;
+
+            d3.select('#chart svg')
+                .datum(data())
+                .transition().duration(500)
+                .call(chart)
+            ;
+
+            nv.utils.windowResize(chart.update);
+
+            return chart;
+        });
+
+        function data() {
+            var dataset = {{ dataset|safe }},
+                cl = {{ cl|safe }},
+                ucl = {{ ucl|safe }};
+
+            return [
+                {
+                    values: dataset,
+                    key: 'Weekly Back Job Proportion',
+                    color: '#ff7f0e'
+                },
+                {
+                    values: cl,
+                    key: 'center line',
+                    color: '#42d9f4'
+                },
+                {
+                    values: ucl,
+                    key: 'upper control limit',
+                    color: '#f44292'
+                }
+            ];
+        }
+    </script>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <div id="chart">
+                    <svg></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                {% if error %}
+                    {{ error }}
+                {% else %}
+                    <h5>P-bar: {{ cl_value|floatformat:2 }}</h5>
+                    <h5>UCL: {{ ucl_value|floatformat:2 }}</h5>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <form action="." method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="back-job">backjob</label>
+                        <input type="text" name="backjob" class="form-control" id="back-job" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="total-job">total job</label>
+                        <input type="text" name="totaljob" class="form-control" id="total-job" required>
+                    </div>
+                    <input type="submit" value="graph" class="btn btn-success float-right">
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

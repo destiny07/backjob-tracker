@@ -2,6 +2,8 @@ import calendar
 import datetime
 
 import math
+import re
+
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
@@ -223,6 +225,7 @@ class MonthlyBackJobPieChart(TemplateView):
         context['month'] = calendar.month_name[int(month)]
         context['backjob_score'] = data['backjob']
         context['non_backjob_score'] = data['non_backjob']
+        context['year_list'] = [year for year in range(2000, int(datetime.datetime.now().year)+1)]
 
         return context
 
@@ -250,6 +253,150 @@ class MonthlyBackJobPieChart(TemplateView):
 
         for backjob in total_job_list:
             if backjob.is_job_reworked:
+                backjob_count += 1
+
+        return backjob_count
+
+    def get_total_job(self, start_date, end_date):
+        return JobOrder.objects.filter(datetime_filed__range=[start_date, end_date]).count()
+
+
+class SimulateLineGraph(View):
+
+    def get(self, request):
+        return TemplateResponse(request, 'line.graph.simulate.html', {})
+
+    def post(self, request, *args, **kwargs):
+        backjob_str = request.POST.get('backjob', '')
+        total_job_str = request.POST.get('totaljob', '')
+        context = {}
+
+        try:
+            backjob_list = self.parse_string(backjob_str)
+            total_job_list = self.parse_string(total_job_str)
+
+            if len(backjob_list) == len(total_job_list):
+                context['backjob_list'] = backjob_list
+                context['total_job_list'] = total_job_list
+
+                dataset = self.generate_graph_data(backjob_list, total_job_list)
+                ucl = self.generate_graph_upper_control_limit(backjob_list, total_job_list)
+                cl = self.generate_graph_center_line(backjob_list, total_job_list)
+
+                context['dataset'] = dataset
+                context['ucl'] = ucl['dataset']
+                context['ucl_value'] = ucl['ucl_value']
+                context['cl'] = cl['dataset']
+                context['cl_value'] = cl['cl_value']
+            else:
+                context['error'] = "Back Job and Total Job sizes are not equal"
+        except ValueError as e:
+            context['error'] = "Invalid value format"
+
+        return TemplateResponse(request, 'line.graph.simulate.html', context)
+
+    def parse_string(self, int_csv):
+        pattern = "^(\d+\s*,\s*)+\d+$"
+        num_list = []
+
+        try:
+            if re.match(pattern, int_csv):
+                num_list =  [int(num) for num in int_csv.split(',')]
+            else:
+                raise ValueError("Invalid regex in format.")
+        except ValueError as e:
+            raise ValueError(e)
+
+        return num_list
+
+    def generate_graph_data(self, backjob_list, total_job_list):
+        dataset = []
+
+        # center_line = self.calculate_pbar(backjob_list, total_job_list)
+        # upper_control_limit = self.calculate_ucl(center_line, total_job_list[-1])
+
+        for i in range(0, len(total_job_list)):
+            pbar = self.calculate_pbar(backjob_list[i], total_job_list[i])
+
+            dataset.append({'x': i, 'y': pbar})
+
+        return dataset
+
+    def generate_graph_upper_control_limit(self, backjob_list, total_job_list):
+        pbar = self.calculate_pbar(backjob_list, total_job_list)
+        ucl = self.calculate_ucl(pbar, total_job_list[-1])
+        upper_control_limit_dataset = []
+
+        for i in range(0, len(total_job_list)):
+            upper_control_limit_dataset.append({'x': i, 'y': ucl})
+
+        return {'dataset': upper_control_limit_dataset, 'ucl_value': ucl}
+
+    def generate_graph_center_line(self, backjob_list, total_job_list):
+        center_line = self.calculate_pbar(backjob_list, total_job_list)
+        center_line_dataset = []
+
+        for i in range(0, len(total_job_list)):
+            center_line_dataset.append({'x': i, 'y': center_line})
+
+        return {'dataset': center_line_dataset, 'cl_value': center_line}
+
+    def calculate_ucl(self, pbar, total_job_count):
+        ucl = 0
+
+        try:
+            ucl = pbar + (3 * math.sqrt((pbar*(1-pbar))/total_job_count))
+        except ZeroDivisionError as e:
+            print(e)
+
+        return ucl
+
+    def calculate_pbar(self, backjob, total_job):
+        pbar = 0
+
+        if type(backjob) is list and type(total_job) is list:
+            backjob_count = 0
+            total_job_count = 0
+
+            for job in backjob:
+                backjob_count += job
+
+            for job in total_job:
+                total_job_count += job
+        else:
+            backjob_count = backjob
+            total_job_count = total_job
+
+        try:
+            pbar = backjob_count / total_job_count
+        except ZeroDivisionError as e:
+            print(e)
+
+        return pbar
+
+    def get_weekly_job_stat(self, start_date, end_date):
+        curr_start_date = start_date
+        backjob_list = []
+        total_job_list = []
+
+        while curr_start_date < end_date:
+            curr_end_date = curr_start_date + datetime.timedelta(days=6)
+            backjob_count = self.get_total_backjob(curr_start_date, curr_end_date)
+            total_job_count = self.get_total_job(curr_start_date, curr_end_date)
+
+            backjob_list.append(backjob_count)
+            total_job_list.append(total_job_count)
+
+            curr_start_date += datetime.timedelta(days=6)
+
+        return {'backjob_list': backjob_list, 'total_job_list': total_job_list}
+
+    def get_total_backjob(self, start_date, end_date):
+        total_job = JobOrder.objects.filter(datetime_filed__range=[start_date, end_date])
+        backjob_count = 0
+
+        for job in total_job:
+            if job.is_job_reworked:
                 backjob_count += 1
 
         return backjob_count
